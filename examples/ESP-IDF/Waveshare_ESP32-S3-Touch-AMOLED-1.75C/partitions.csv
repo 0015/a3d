@@ -1,0 +1,5 @@
+# Name,   Type, SubType, Offset,  Size, Flags
+# The two containers are ~425 KB of the app image, so `factory` is 3 M.
+nvs,      data, nvs,     0x9000,  24K,
+phy_init, data, phy,     0xf000,  4K,
+factory,  app,  factory, 0x10000, 3M,

@@ -1,0 +1,35 @@
+# The benchmark runs long uninterrupted measurement loops. The watchdog is
+# disabled rather than fed, so a slow sweep cannot be mistaken for a hang.
+CONFIG_ESP_TASK_WDT_EN=n
+
+CONFIG_FREERTOS_HZ=1000
+CONFIG_ESP_MAIN_TASK_STACK_SIZE=8192
+CONFIG_COMPILER_OPTIMIZATION_PERF=y
+
+CONFIG_PARTITION_TABLE_CUSTOM=y
+CONFIG_PARTITION_TABLE_CUSTOM_FILENAME="partitions.csv"
+CONFIG_ESPTOOLPY_FLASHSIZE_16MB=y
+CONFIG_ESPTOOLPY_FLASHMODE_QIO=y
+CONFIG_ESPTOOLPY_FLASHFREQ_80M=y
+
+CONFIG_ESP_DEFAULT_CPU_FREQ_MHZ_240=y
+
+# 8 MB octal PSRAM, same part and same pins as the ESP32-S3-LCD2 board.
+CONFIG_SPIRAM=y
+CONFIG_SPIRAM_MODE_OCT=y
+CONFIG_SPIRAM_TYPE_AUTO=y
+CONFIG_SPIRAM_SPEED_80M=y
+CONFIG_SPIRAM_IGNORE_NOTFOUND=y
+CONFIG_SPIRAM_CLK_IO=30
+CONFIG_SPIRAM_CS_IO=26
+
+# DELIBERATELY ABSENT, and this is the important part of the file:
+#   CONFIG_SPIRAM_FETCH_INSTRUCTIONS
+#   CONFIG_SPIRAM_RODATA
+#   CONFIG_SPIRAM_XIP_FROM_PSRAM
+# Waveshare's LVGL configuration for this board turns all three on, which moves
+# code AND .rodata into PSRAM. a3d embeds its containers in .rodata and samples
+# their textures in place, so with those options the benchmark's `place=xip`
+# row would be measuring PSRAM while claiming to measure memory-mapped flash -
+# and the ESP32-S3-LCD2 column it is meant to be compared against would not be.
+# Same silicon, same settings, or the comparison is not one.

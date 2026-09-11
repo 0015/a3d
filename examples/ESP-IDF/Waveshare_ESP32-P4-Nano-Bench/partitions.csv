@@ -1,0 +1,8 @@
+# Name,   Type, SubType, Offset,  Size, Flags
+# The two benchmark containers are embedded in the app image: fox.a3d is 183 KB
+# and cesiumman.a3d is 233 KB, both in .rodata, which on ESP32 is memory-mapped
+# flash - the rasterizer samples their textures in place. 4M is generous and
+# leaves room for the model you replace them with.
+nvs,      data, nvs,     0x9000,  0x6000,
+phy_init, data, phy,     0xf000,  0x1000,
+factory,  app,  factory, ,        4M,

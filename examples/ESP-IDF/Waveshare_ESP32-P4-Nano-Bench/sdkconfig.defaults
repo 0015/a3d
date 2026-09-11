@@ -1,0 +1,58 @@
+CONFIG_IDF_TARGET="esp32p4"
+
+# This board carries ESP32-P4 revision v1.0. ESP-IDF 5.5.4 defaults the minimum
+# to v3.1, and an image built with that default refuses to FLASH here:
+#   "requires chip revision in range [v3.1 - v3.99] (this chip is revision v1.0)"
+# It is not a warning at boot, it is esptool declining.
+#
+# BOTH lines are needed and the first is the one that is easy to miss:
+# ESP32P4_REV_MIN_100 `depends on ESP32P4_SELECTS_REV_LESS_V3`, so setting the
+# revision alone is silently ignored and the config comes back saying 301.
+# IDF treats P4 below v3.0 and P4 from v3.0 as mutually exclusive targets -
+# "Revisions higher than 3.0 (included) is not compatible with 0.x and 1.x" -
+# which is why it is a switch and not just a number.
+CONFIG_ESP32P4_SELECTS_REV_LESS_V3=y
+CONFIG_ESP32P4_REV_MIN_100=y
+
+CONFIG_ESPTOOLPY_FLASHMODE_QIO=y
+CONFIG_ESPTOOLPY_FLASHSIZE_16MB=y
+CONFIG_PARTITION_TABLE_CUSTOM=y
+CONFIG_COMPILER_OPTIMIZATION_PERF=y
+
+CONFIG_ESP_MAIN_TASK_STACK_SIZE=10240
+CONFIG_FREERTOS_HZ=1000
+
+# The 800x1280 panel's frame buffer lives here. The benchmark's own tile
+# buffers do NOT: they are 800 x 40 x 2 bytes of colour plus the same of depth
+# per worker, asked for as MALLOC_CAP_DMA and MALLOC_CAP_INTERNAL, which is
+# 256 KB of internal SRAM at two workers. That is the number to watch in the
+# boot log if this build ever fails to allocate a slot.
+CONFIG_SPIRAM=y
+CONFIG_SPIRAM_SPEED_200M=y
+
+# THE L2 CACHE, AND THE MEASUREMENT THAT PUT IT BACK.
+#
+# ESP-IDF defaults the ESP32-P4 to a 128 KB L2 with 64-byte lines
+# (components/esp_system/port/soc/esp32p4/Kconfig.cache, identical in 5.5.4 and
+# 6.0.2). These two lines double both. They arrived here by being copied from
+# the DSI viewer example, so on 2026-09-09 they were removed and the board was
+# reflashed to find out what they were worth - one variable, same source, same
+# ESP-IDF 6.0.2, same QIO 80 MHz flash, same board.
+#
+# Reverting to the IDF default made EVERY row slower: frame time +1.0% to
+# +28.5% (mean +11.7%), rasterizer +0.8% to +21.1% (mean +8.1%), against a
+# run-to-run spread of 0.19%. So they are not decoration and they are not
+# cargo-cult - they are worth up to 28% here, and they stay on.
+#
+# Logs: bench/experiments/2026-09-09_p4-l2-cache/
+CONFIG_CACHE_L2_CACHE_256KB=y
+CONFIG_CACHE_L2_CACHE_LINE_128B=y
+
+# DELIBERATELY ABSENT: CONFIG_SPIRAM_XIP_FROM_PSRAM. The vendor configuration
+# turns it on, which moves code and .rodata into PSRAM - and the embedded model
+# is .rodata that the loader reads in place. Leaving it off keeps that read on
+# memory-mapped flash, and keeps the rasterizer's code out of PSRAM.
+
+# Long uninterrupted render loops: the watchdog is disabled rather than fed, so
+# a slow model cannot be mistaken for a hang.
+CONFIG_ESP_TASK_WDT_EN=n

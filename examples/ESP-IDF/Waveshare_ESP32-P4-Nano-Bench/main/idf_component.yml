@@ -1,0 +1,48 @@
+## The board component next door pulls the panel and touch drivers; this file
+## constrains the one that differs between ESP-IDF majors.
+##
+## THE RANGE IS OPEN ON PURPOSE, and this is the error it exists to avoid:
+##
+##   esp_lcd_jd9365.c:85: 'esp_lcd_panel_dev_config_t' has no member named
+##                        'color_space'
+##
+## Waveshare ship 1.0.6 for IDF 5.x and 2.0.0 for IDF 6.x, and neither is
+## "newer and better" - each is right for one IDF. 1.0.6 reads
+## `panel_dev_config->color_space`, which IDF 5.5.4 still carries as a
+## deprecated union member and IDF 6.0 deleted; 2.0.0 reads `rgb_ele_order` and
+## guards its config macros with ESP_IDF_VERSION. Pinning either one makes this
+## project build on one IDF and fail to compile on the other, before a line of
+## a3d is reached.
+##
+## So the range spans both and the solver picks by the IDF in front of it,
+## exactly as ../Waveshare_ESP32-P4-Nano/components/p4_nano_board does. That
+## component's board.c is already version-guarded: it fills the DPI config
+## field by field instead of expanding the vendor macro, and calls
+## esp_lcd_dpi_panel_enable_dma2d() after init on 6.0.
+##
+## The two sibling examples pin instead, each to the pairing it has actually
+## run on the board with: ../Waveshare_ESP32-P4-Nano is ~1.0.6 with IDF <6.0,
+## ../ESP32-P4-Nano-STL-Minimal is ^2.0.0 with IDF >=6.0. A benchmark is not a
+## hardware-verified demo, and being buildable on the IDF you already have
+## matters more here than reproducing one exact toolchain - but see the note in
+## README.md about not mixing IDF versions inside one comparison table.
+dependencies:
+  idf: ">=5.4"
+  # EXACT versions, not ranges. These are the versions that were resolved,
+  # built and run; a caret range is still a range, and this project already
+  # watched esp_lcd_co5300 walk from 2.1.0 to 2.2.0 between a board run and a
+  # fresh clone with nothing here having changed. Both ESP-IDF 5.5.4 and 6.0.2
+  # resolve every one of these to the same version, so pinning costs nothing.
+  # To move one, change it here and rebuild on both majors.
+  waveshare/esp_lcd_jd9365: "2.0.0"
+  espressif/esp_lcd_touch_gt911: "1.2.1"
+  #
+  # TRANSITIVE dependencies, pinned here too. The vendor drivers above pull
+  # these in through their own ranges (cst9217 asks for esp_lcd_touch "^1.1.0",
+  # sh8601/co5300/jd9365 for cmake_utilities "0.*"), so without a pin they are
+  # still free to move under a build whose direct versions are exact. Naming
+  # them makes the WHOLE graph fixed. Each satisfies every vendor's stated
+  # range, so this constrains the solver without fighting it.
+  espressif/esp_lcd_touch: "1.2.1"
+  espressif/i2c_bus: "1.5.2"
+  espressif/cmake_utilities: "0.5.3"

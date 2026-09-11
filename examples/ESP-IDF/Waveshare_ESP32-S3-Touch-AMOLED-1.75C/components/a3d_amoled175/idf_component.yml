@@ -1,0 +1,23 @@
+dependencies:
+  idf: ">=5.5"
+  # EXACT versions, not ranges. These are the versions that were resolved,
+  # built and run; a caret range is still a range, and this project already
+  # watched esp_lcd_co5300 walk from 2.1.0 to 2.2.0 between a board run and a
+  # fresh clone with nothing here having changed. Both ESP-IDF 5.5.4 and 6.0.2
+  # resolve every one of these to the same version, so pinning costs nothing.
+  # To move one, change it here and rebuild on both majors.
+  #
+  # This one is why the rule exists: unbounded, it silently resolved 2.2.0 in a
+  # fresh clone while the build that was flashed and MEASURED on the board used
+  # 2.1.0 - a different panel driver, and it still compiled.
+  espressif/esp_lcd_co5300: "2.2.0"
+  waveshare/esp_lcd_touch_cst9217: "2.0.0"
+  #
+  # TRANSITIVE dependencies, pinned here too. The vendor drivers above pull
+  # these in through their own ranges (cst9217 asks for esp_lcd_touch "^1.1.0",
+  # sh8601/co5300/jd9365 for cmake_utilities "0.*"), so without a pin they are
+  # still free to move under a build whose direct versions are exact. Naming
+  # them makes the WHOLE graph fixed. Each satisfies every vendor's stated
+  # range, so this constrains the solver without fighting it.
+  espressif/esp_lcd_touch: "1.2.1"
+  espressif/cmake_utilities: "0.5.3"

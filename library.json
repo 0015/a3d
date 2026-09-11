@@ -1,0 +1,37 @@
+{
+    "name": "a3d",
+    "version": "0.9.0",
+    "authors": {
+        "name": "Eric Nam",
+        "url": "https://github.com/0015",
+        "maintainer": true
+    },
+    "description": "A self-contained 3D renderer for embedded targets: binary asset container, skeletal animation, tile binning and a software rasterizer. Header-only, no third-party dependency.",
+    "keywords": "3d, renderer, rasterizer, esp32, esp32p4, esp32s3, esp32c6, gltf, skeletal-animation",
+    "license": "Apache-2.0",
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/0015/a3d.git"
+    },
+    "frameworks": [
+        "arduino",
+        "espidf"
+    ],
+    "platforms": "espressif32",
+    "headers": "a3d.h",
+    "export": {
+        "exclude": [
+            "**/build",
+            "**/managed_components",
+            "**/.cache",
+            "**/sdkconfig",
+            "**/sdkconfig.old",
+            "**/.DS_Store"
+        ]
+    },
+    "build": {
+        "includeDir": "src",
+        "srcDir": "src",
+        "libArchive": false
+    }
+}

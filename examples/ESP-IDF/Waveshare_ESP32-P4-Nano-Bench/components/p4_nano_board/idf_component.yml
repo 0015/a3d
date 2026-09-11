@@ -1,0 +1,27 @@
+## Only what this board actually needs to show a picture and read a finger.
+##
+## The vendor BSP (waveshare/esp32_p4_nano) declares esp_lvgl_port, lvgl,
+## esp_codec_dev and four panel drivers, and the component manager fetches all
+## of them whether or not a project calls into them - LVGL alone is ~180 MB of
+## source. This example never starts LVGL and plays no audio, so it uses the
+## two drivers it does need directly.
+dependencies:
+  idf: ">=5.4"
+  # The panel actually fitted. jd9365_10_1 is deprecated in Waveshare's own
+  # README in favour of this one, and was never included by anything here.
+  #
+  # BOTH MAJORS, because they are the IDF 5.x and IDF 6.x releases of the same
+  # driver and this component is shared by projects on both. 1.0.6 reads
+  # `panel_dev_config->color_space`, which IDF 6.0 deleted, so it does not
+  # compile there at all; 2.0.0 reads `rgb_ele_order` and guards its config
+  # macros with ESP_IDF_VERSION. Neither is "newer and better" - each is right
+  # for one IDF - so the range is open here and each project pins the one it
+  # was verified with in its own main/idf_component.yml.
+  # EXACT versions, not ranges. These are the versions that were resolved,
+  # built and run; a caret range is still a range, and this project already
+  # watched esp_lcd_co5300 walk from 2.1.0 to 2.2.0 between a board run and a
+  # fresh clone with nothing here having changed. Both ESP-IDF 5.5.4 and 6.0.2
+  # resolve every one of these to the same version, so pinning costs nothing.
+  # To move one, change it here and rebuild on both majors.
+  waveshare/esp_lcd_jd9365: "2.0.0"
+  espressif/esp_lcd_touch_gt911: "1.2.1"

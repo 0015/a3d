@@ -1,0 +1,22 @@
+CONFIG_IDF_TARGET="esp32c6"
+
+# The benchmark runs long uninterrupted measurement loops. The watchdog is
+# disabled rather than fed, so a slow sweep cannot be mistaken for a hang - and
+# on a part with no FPU some of these frames really are seconds long.
+CONFIG_ESP_TASK_WDT_EN=n
+
+CONFIG_FREERTOS_HZ=1000
+CONFIG_ESP_MAIN_TASK_STACK_SIZE=8192
+CONFIG_COMPILER_OPTIMIZATION_PERF=y
+
+CONFIG_PARTITION_TABLE_CUSTOM=y
+CONFIG_PARTITION_TABLE_CUSTOM_FILENAME="partitions.csv"
+CONFIG_ESPTOOLPY_FLASHSIZE_16MB=y
+
+# The rasterizer samples every texture out of memory-mapped flash, so the flash
+# interface is on the per-pixel path and not just the boot path.
+CONFIG_ESPTOOLPY_FLASHMODE_QIO=y
+CONFIG_ESPTOOLPY_FLASHFREQ_80M=y
+
+# Flashed and monitored over the C6's own USB.
+CONFIG_ESP_CONSOLE_USB_SERIAL_JTAG=y

@@ -1,0 +1,18 @@
+CONFIG_ESP_DEFAULT_CPU_FREQ_MHZ_240=y
+
+# This example fits in internal SRAM and never allocates from PSRAM, so PSRAM
+# is not required. It is enabled because the board has it and leaving it off
+# would be a different memory map from every other example here.
+CONFIG_SPIRAM=y
+CONFIG_SPIRAM_MODE_OCT=y
+CONFIG_SPIRAM_TYPE_AUTO=y
+CONFIG_SPIRAM_SPEED_80M=y
+CONFIG_SPIRAM_IGNORE_NOTFOUND=y
+CONFIG_SPIRAM_CLK_IO=30
+CONFIG_SPIRAM_CS_IO=26
+
+CONFIG_ESPTOOLPY_FLASHMODE_QIO=y
+CONFIG_ESPTOOLPY_FLASHFREQ_80M=y
+
+# Flashed and monitored over the S3's own USB.
+CONFIG_ESP_CONSOLE_USB_SERIAL_JTAG=y
