@@ -38,7 +38,7 @@ import a3d_panel as PANEL
 
 #: Where a3d comes from when the project does not carry a copy of it.
 A3D_GIT = "https://github.com/0015/a3d.git"
-A3D_REF = "main"
+A3D_REF = "v0.9.0"
 
 #: What each part needs in sdkconfig that a default project does not have.
 TARGETS = {
@@ -273,9 +273,10 @@ def _idf_component_yml(target: str, panel: str = "offscreen",
             "## the renderer lives in its own repository and this is the line that",
             "## brings it in. `idf.py build` does the fetch; nothing to install.",
             "##",
-            "## `version` is a git ref. It is a BRANCH here, which means your build",
-            "## can change under you the next time that branch moves. Pin a tag",
-            "## once one exists - a reproducible build is worth the edit.",
+            "## `version` is a git ref, and it is a TAG - so this build is",
+            "## reproducible: the ref cannot move under you. Change it to track a",
+            "## newer release; a branch name would work too and is what you do NOT",
+            "## want in a build you intend to repeat.",
             "dependencies:",
             '  idf: "%s"' % idf,
             "  a3d:",
