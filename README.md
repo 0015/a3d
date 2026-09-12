@@ -791,6 +791,7 @@ byte order, the bus mutex, where the tile buffers have to live, what ESP-IDF
 | | |
 |---|---|
 | `--max-triangles N` | decimate to N triangles (quadric error) |
+| `--drop-blend` | leave out `alphaMode: BLEND` primitives — see below |
 | `--max-texture N` | cap texture size; snapped down to a power of two |
 | `--anim-tolerance X` | drop more or fewer keyframes |
 | `--clips a,b` | keep only these animation clips |
@@ -823,6 +824,32 @@ Bitmaps are a derivative of the outlines they came from, so the tool **refuses
 system fonts by name** - `/System/Library/Fonts` and friends - and defaults to
 DejaVu Sans Mono. ASCII 32..126 only; there is no Unicode path. The full
 instructions are in [docs/FONTS.md](docs/FONTS.md).
+
+### Transparency
+
+**a3d has no alpha blending and no alpha test.** Every covered pixel is written
+opaquely, so a glTF material with `alphaMode: BLEND` or `MASK` does not come
+out faint — it comes out **solid**. The importer warns for every such material.
+
+This matters more than the triangle count suggests, because the shapes an
+artist authors for BLEND are exactly the ones meant to be nearly invisible: a
+propeller blur disc, a soft shadow quad, a glow card. They are large, and they
+sit in front of the model. On one stylized aircraft they were 40 triangles of
+7,692 — and they were the first thing you saw.
+
+The second half is worse, because it does not look like a transparency problem
+at all: those quads are in `worldBounds()` too, so they inflated the model's
+bounding box from 1.37 to 3.24 and pushed the framing camera 2.4x too far back.
+The picture does not say "something transparent is opaque", it says "my model
+imported tiny" — with the vertex, triangle, material and texture counts all
+exactly right.
+
+```bash
+python3 tools/a3d_export.py --check model.glb --drop-blend
+```
+
+`--drop-blend` leaves those primitives out. A node whose mesh loses all of them
+keeps its place in the hierarchy and simply draws nothing.
 
 ### Draco
 

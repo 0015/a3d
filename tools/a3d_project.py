@@ -38,7 +38,7 @@ import a3d_panel as PANEL
 
 #: Where a3d comes from when the project does not carry a copy of it.
 A3D_GIT = "https://github.com/0015/a3d.git"
-A3D_REF = "v0.9.1"
+A3D_REF = "v0.9.2"
 
 #: What each part needs in sdkconfig that a default project does not have.
 TARGETS = {

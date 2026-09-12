@@ -4,6 +4,30 @@ All notable changes to a3d are recorded here. The format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and versions follow
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.9.2] - 2026-09-12
+
+Transparency, which a3d does not have and had not been saying so. A glTF
+material marked `alphaMode: BLEND` is not drawn faint by this renderer, it is
+drawn solid - and the importer had been ignoring the field without a word.
+
+### Added
+- `--drop-blend` for `a3d_export.py`: leave out primitives whose glTF material
+  is `alphaMode: BLEND` or `MASK`.
+
+### Changed
+- **A non-opaque material now warns on every import.** a3d writes every covered
+  pixel opaquely - there is no alpha blend and no alpha test - and the importer
+  had been ignoring `alphaMode` silently. The shapes authored for BLEND are the
+  ones meant to be nearly invisible (a propeller blur disc, a soft shadow quad,
+  a glow card), so they are large and they sit in front of the model.
+
+  They are also in `worldBounds()`, which is the half that does not look like a
+  transparency problem: on one stylized aircraft 40 triangles of 7,692 inflated
+  the bounding box from 1.37 to 3.24 and pushed the framing camera 2.4x too far
+  back. The vertex, triangle, material and texture counts were all correct, so
+  nothing that counts could see it - the same shape as the Draco import this
+  project already refuses by name.
+
 ## [0.9.1] - 2026-09-11
 
 Panels you already have, rather than a longer catalogue of panels a3d has

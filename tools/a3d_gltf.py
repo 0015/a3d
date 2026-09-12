@@ -216,6 +216,23 @@ def _decode_image(g: Gltf, image_index: int, max_size: int):
 DRACO = "KHR_draco_mesh_compression"
 
 
+def non_opaque_materials(js) -> dict:
+    """
+    Material index -> (name, alphaMode), for every material a3d cannot honour.
+
+    a3d's rasterizer writes every covered pixel opaquely: no alpha blend, no
+    alpha test. This is a module-level function rather than a few lines inside
+    convert() because the browser front end has to warn about the same thing
+    and must not carry a second opinion about what counts.
+    """
+    out = {}
+    for i, m in enumerate(js.get("materials", [])):
+        mode = m.get("alphaMode", "OPAQUE")
+        if mode != "OPAQUE":
+            out[i] = (m.get("name", ""), mode)
+    return out
+
+
 def _refuse_compressed_geometry(js) -> None:
     """
     Refuse a file whose geometry this importer cannot read, LOUDLY.
@@ -250,7 +267,8 @@ def _refuse_compressed_geometry(js) -> None:
             "the right vertex count and every vertex at the origin.")
 
 
-def convert(path: Path, *, max_texture: int = 256, verbose: bool = True, clips=None, max_triangles=0, anim_tolerance=1.0) -> S.Scene:
+def convert(path: Path, *, max_texture: int = 256, verbose: bool = True, clips=None,
+            max_triangles=0, anim_tolerance=1.0, drop_blend: bool = False) -> S.Scene:
     g = Gltf(path)
     js = g.js
     _refuse_compressed_geometry(js)
@@ -341,6 +359,22 @@ def convert(path: Path, *, max_texture: int = 256, verbose: bool = True, clips=N
         return image_to_texture[src]
 
     # --- materials --------------------------------------------------------
+    # a3d's rasterizer writes every covered pixel opaquely: there is no alpha
+    # blend and no alpha test. A BLEND material therefore does not come out
+    # faint, it comes out SOLID - and the shapes authored for it are usually
+    # the ones that are meant to be nearly invisible (a propeller blur disc, a
+    # soft shadow quad, a glow card), so they are large and they sit in front
+    # of the model. That is silent twice over: the mesh draws, the counts are
+    # right, and the offending quad also inflates worldBounds() and pushes the
+    # camera back, which reads as "the model imported small" rather than as a
+    # transparency problem. Say so, and offer the one fix there is.
+    _non_opaque = non_opaque_materials(js)
+    blend_materials: set[int] = set(_non_opaque)
+    for _mi, (_name, _mode) in _non_opaque.items():
+        warn(f"material {_name!r} is alphaMode {_mode}; a3d has no "
+             "alpha blending and will draw it SOLID"
+             + (" - dropped (--drop-blend)" if drop_blend
+                else ". Pass --drop-blend to leave those primitives out"))
     for m in js.get("materials", []):
         base, _, rough = base_colour_of(m)
         if ("pbrMetallicRoughness" not in m) and (SPEC_GLOSS in m.get("extensions", {})):
@@ -371,6 +405,8 @@ def convert(path: Path, *, max_texture: int = 256, verbose: bool = True, clips=N
         for pi, prim in enumerate(m.get("primitives", [])):
             if prim.get("mode", 4) != 4:
                 warn(f"mesh {mi} primitive {pi} is not TRIANGLES; skipped")
+                continue
+            if drop_blend and prim.get("material") in blend_materials:
                 continue
             attrs = prim.get("attributes", {})
             if "POSITION" not in attrs:

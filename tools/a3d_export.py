@@ -328,7 +328,8 @@ def check(args, ap) -> int:
     scene = a3d_gltf.convert(src, max_texture=args.max_texture,
                              clips=args.clips.split(",") if args.clips else None,
                              max_triangles=args.max_triangles,
-                             anim_tolerance=args.anim_tolerance)
+                             anim_tolerance=args.anim_tolerance,
+                             drop_blend=args.drop_blend)
     data = S.build_container(scene)
     C.read_header(data)                 # never claim success without re-reading
     out.parent.mkdir(parents=True, exist_ok=True)
@@ -405,7 +406,8 @@ def project(args, ap) -> int:
         scene = a3d_gltf.convert(src, max_texture=args.max_texture,
                                  clips=args.clips.split(",") if args.clips else None,
                                  max_triangles=args.max_triangles,
-                                 anim_tolerance=args.anim_tolerance)
+                                 anim_tolerance=args.anim_tolerance,
+                                 drop_blend=args.drop_blend)
         data = S.build_container(scene)
         C.read_header(data)             # never claim success without re-reading
         model = dest / (Path(args.out).name if args.out else src.stem + ".a3d")
@@ -605,6 +607,13 @@ def main() -> int:
                          "of rotation and 0.05%% of model extent, 0 disables it. "
                          "The bound is checked against every original key, so it "
                          "is an error bound on the whole curve.")
+    ap.add_argument("--drop-blend", action="store_true",
+                    help="leave out primitives whose material is alphaMode "
+                         "BLEND or MASK. a3d draws every covered pixel opaquely, "
+                         "so a propeller blur disc or a soft shadow quad comes "
+                         "out SOLID in front of the model - and inflates the "
+                         "bounding box, which reads as the model importing "
+                         "small. Without this they are imported and warned about.")
     ap.add_argument("--clips", metavar="LIST",
                     help="comma-separated animation names or indices to keep "
                          "(default: all). Animation keys are not quantized, so "
@@ -695,7 +704,8 @@ def main() -> int:
         scene = a3d_gltf.convert(Path(args.gltf), max_texture=args.max_texture,
                                  clips=args.clips.split(",") if args.clips else None,
                                  max_triangles=args.max_triangles,
-                                 anim_tolerance=args.anim_tolerance)
+                                 anim_tolerance=args.anim_tolerance,
+                                 drop_blend=args.drop_blend)
         data = S.build_container(scene)
         info = C.read_header(data)          # never claim success without re-reading
         out = Path(args.out)

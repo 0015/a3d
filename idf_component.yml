@@ -1,4 +1,4 @@
-version: "0.9.1"
+version: "0.9.2"
 description: >-
   A self-contained 3D renderer for embedded targets: a binary asset container,
   skeletal animation, tile binning, a software rasterizer and a 2D canvas.
