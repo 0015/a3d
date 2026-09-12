@@ -723,6 +723,56 @@ By default the generated app renders **off screen** and logs its frame rate.
 That is on purpose: `idf.py flash monitor` then works on the first try and
 prints the real cost of your model on your part, which beats any interpolation.
 
+### Your panel is not in `--list-panels`, and that is fine
+
+The catalogue is deliberately small: a bus is in it only if its bring-up was
+copied from a project that has driven real glass. Almost every board is
+therefore missing from it, and the way in is not a longer list.
+
+**If you already have the panel working** - a vendor example, a BSP, an LVGL
+port, your own code - you have an `esp_lcd_panel_handle_t`, and that is all a3d
+needs:
+
+```cpp
+#include "backends/esp_lcd/a3d_display_esp_lcd.h"
+
+a3d::EspLcdDisplay glass;
+a3d::EspLcdConfig  cfg;
+cfg.panel  = my_panel;      // whatever your bring-up returned
+cfg.io     = my_panel_io;   // the panel IO it was built on
+cfg.width  = 466;
+cfg.height = 466;
+ESP_ERROR_CHECK(glass.begin(cfg));
+
+viewer.begin(glass.display());
+```
+
+That covers every esp_lcd driver in the component registry, every vendor fork,
+and panels that do not exist yet.
+
+**What the adapter is actually for is the wait.**
+`esp_lcd_panel_draw_bitmap()` does not finish with your buffer before it
+returns - on SPI, QSPI and I80 the colour transfer is queued with the DMA still
+reading it, and on MIPI-DSI with DMA2D the copy is asynchronous and the next
+call is rejected outright. `a3d::Display::sendTile` must not return until the
+buffer can be reused, because the viewer hands it to the next tile immediately.
+A send that does not wait puts half of one tile and half of the next on the
+glass, and that reads as a renderer bug rather than a driver one. The adapter
+registers the bus's completion callback, drains tokens left over from an
+earlier frame, waits with a timeout, and owns the mutex two workers need.
+
+`EspLcdWait::Auto` uses the panel IO callback when you pass an IO handle. The
+other two modes have to be named: `DpiCallback` for MIPI-DSI, `Synchronous` for
+RGB parallel, where `draw_bitmap` really has finished on return. Auto refuses
+rather than guessing either - an RGB panel genuinely needs no wait, but so does
+a mistake.
+
+**If you would rather start from a generated project**, `--panel
+esp_lcd_custom` writes a `main/panel.c` with one empty `panel_bring_up()` and
+everything else already written. It builds and flashes as generated and logs
+that the function is empty, so you are never stuck behind a project that will
+not compile until you have finished the hard part.
+
 ### Other flags worth knowing
 
 | | |
@@ -843,6 +893,7 @@ src/a3d/            the core: types, math, container reader, scene runtime,
 src/backends/soft/      the software rasterizer, the 2D canvas and the fonts
 src/backends/freertos/  FreeRtosExecutor
 src/backends/threads/   std::thread executor, for host tests
+src/backends/esp_lcd/   a3d::Display from an esp_lcd panel you already have
 src/loaders/        .a3d from memory, stdio, an ESP partition; STL; SD card
 src/viewer/         a3d::Viewer - the four-call wrapper
 tools/              the exporter chain and the host previewer

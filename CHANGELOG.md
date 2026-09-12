@@ -4,7 +4,46 @@ All notable changes to a3d are recorded here. The format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and versions follow
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [0.9.0] - 2026-09-11
+## [0.9.1] - 2026-09-11
+
+Panels you already have, rather than a longer catalogue of panels a3d has
+driven. The catalogue in `tools/a3d_panel.py` is deliberately small - a bus is
+in it only if its bring-up came from a project in this tree that has driven
+real glass - and that leaves out almost every board. Every esp_lcd driver in
+the component registry, every vendor fork and every BSP ends at an
+`esp_lcd_panel_handle_t`, so the way in is one adapter rather than thirty
+entries, and the pins stay in the code that already works on your desk.
+
+### Added
+- `a3d::EspLcdDisplay` (`src/backends/esp_lcd/a3d_display_esp_lcd.h`): an
+  `a3d::Display` from an `esp_lcd_panel_handle_t` you already have. It owns the
+  completion wait, the drain of stale tokens, the bus mutex two workers need,
+  and optional touch. Header-only, and the optional dependencies
+  (`esp_lcd_mipi_dsi.h`, `esp_lcd_touch.h`) are probed with `__has_include`, so
+  a project without them compiles the feature out rather than failing.
+- `--panel esp_lcd_custom` for `a3d_export.py --project`: a generated `panel.c`
+  with one empty `panel_bring_up()` and everything else written. It builds and
+  flashes as generated and says the function is empty, rather than refusing to
+  compile until you have written the hard part. Its size comes from
+  `--viewport`, because it is the one panel whose glass a3d has not been told
+  about.
+
+### Fixed
+- **The generated MIPI-DSI glue did not wait for its tile.** Its comment said a
+  DPI `draw_bitmap` is a plain memory write, which is true only without DMA2D -
+  and it enables DMA2D. With DMA2D the copy is asynchronous, the call returns
+  with the 2D-DMA still reading the tile, and the next call is rejected with
+  `ESP_ERR_INVALID_STATE`. It now registers `on_color_trans_done` and waits, as
+  the hardware-verified example in this tree already did.
+- **The generated project pinned `waveshare/esp_lcd_jd9365` to `~1.0.6`,** which
+  cannot compile on ESP-IDF 6.0: 5.5 still carries
+  `esp_lcd_panel_dev_config_t::color_space` as a deprecated union member and 6.0
+  deleted it. The range is `>=1.0.6,<3.0.0` now, so the solver picks 1.x for
+  IDF 5 and 2.x for IDF 6. Both were built to a flashable binary.
+- The generated project README advertised `--resolution`, which is not a flag.
+  It is `--viewport`.
+
+## [0.9.0] - 2026-09-10
 
 First public release.
 

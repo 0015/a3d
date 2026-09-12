@@ -38,7 +38,7 @@ import a3d_panel as PANEL
 
 #: Where a3d comes from when the project does not carry a copy of it.
 A3D_GIT = "https://github.com/0015/a3d.git"
-A3D_REF = "v0.9.0"
+A3D_REF = "v0.9.1"
 
 #: What each part needs in sdkconfig that a default project does not have.
 TARGETS = {
@@ -292,6 +292,7 @@ def _idf_component_yml(target: str, panel: str = "offscreen",
         ]
     for name in sorted(deps):
         lines.append('  %s: "%s"' % (name, deps[name]))
+    lines += PANEL.manifest_note(panel)
     return "\n".join(lines) + "\n"
 
 
@@ -626,12 +627,7 @@ overwrote it.
 
 {a3d_how}
 
-## The pins in `main/panel.c` are not your board's
-
-They were copied from {panel_source} and nothing in a3d can know your wiring.
-Check every `#define` at the top of that file against your schematic before you
-flash. A plausible default driving the wrong GPIO looks exactly like a dead
-panel, which is the most expensive way to be wrong here.
+{panel_section}
 
 Two symptoms worth recognising before you start bisecting:
 
@@ -659,6 +655,40 @@ the very end otherwise, on the size check.
 """
 
 
+_PANEL_SECTION_CATALOGUE = """## The pins in `main/panel.c` are not your board's
+
+They were copied from {panel_source} and nothing in a3d can know your wiring.
+Check every `#define` at the top of that file against your schematic before you
+flash. A plausible default driving the wrong GPIO looks exactly like a dead
+panel, which is the most expensive way to be wrong here."""
+
+_PANEL_SECTION_CUSTOM = """## Write `panel_bring_up()` in `main/panel.c`
+
+This project asked for no catalogue panel, so it guesses nothing: `panel.c`
+holds one empty function and everything else already written. Paste your own
+bring-up into `panel_bring_up()` - from a vendor example, a BSP, an LVGL port,
+or code of your own - set `*out_panel` to the initialised
+`esp_lcd_panel_handle_t`, and set `*out_io` to the panel IO it was built on.
+
+It builds and flashes as generated: it logs that the function is empty and
+stops, rather than refusing to compile until you have written the hard part.
+
+Then check two things in that file:
+
+- **`PANEL_WAIT`** near the top. `PANEL_WAIT_IO` for SPI, QSPI and I80,
+  `PANEL_WAIT_DPI` for MIPI-DSI, `PANEL_WAIT_NONE` only if you have checked
+  that your `draw_bitmap` finishes with the buffer before it returns (RGB
+  parallel does; nothing else here does).
+- **`PANEL_W` / `PANEL_H`**, which came from `--viewport` because nothing
+  here knows your glass. A viewport that disagrees with the panel draws a
+  correct picture into the wrong window, which reads as a projection bug.
+
+If you would rather not generate a project at all, the same job inside an app
+you already have is `a3d::EspLcdDisplay` -
+`src/backends/esp_lcd/a3d_display_esp_lcd.h` in the a3d checkout - which takes
+the two handles you already have and returns an `a3d::Display`."""
+
+
 def generate(dest: Path, model: Path, target: str, a3d_root: Path,
              panel_w: int, panel_h: int, tile_h: int, flash_mb: int,
              source_name: str, workers: int | None = None,
@@ -681,7 +711,11 @@ def generate(dest: Path, model: Path, target: str, a3d_root: Path,
     t = TARGETS[target]
     if workers is None:
         workers = t["cores"]
-    if panel != "offscreen":
+    # A real panel's size wins over the requested viewport: a viewport that
+    # disagrees with the glass draws a correct picture into the wrong window,
+    # which reads as a projection bug. The exception is the custom panel, whose
+    # size is the one thing nobody here knows - so --viewport is believed.
+    if panel != "offscreen" and PANEL.PANELS[panel].get("native", True):
         panel_w, panel_h = PANEL.PANELS[panel]["size"]
 
     model_bytes = model.stat().st_size
@@ -746,7 +780,10 @@ def generate(dest: Path, model: Path, target: str, a3d_root: Path,
                  else _A3D_PATH.format(a3d_root=a3d_root)),
         panel_label=PANEL.PANELS[panel]["label"],
         touch_label=PANEL.TOUCH[touch]["label"],
-        panel_source=PANEL.PANELS[panel]["source"]))
+        panel_section=(_PANEL_SECTION_CUSTOM
+                       if PANEL.PANELS[panel]["family"] == "custom"
+                       else _PANEL_SECTION_CATALOGUE.format(
+                           panel_source=PANEL.PANELS[panel]["source"]))))
 
     return dict(target=target, sym=sym, app_bytes=app_bytes, workers=workers,
                 model_bytes=model_bytes, psram=need_psram, tiles=tiles,

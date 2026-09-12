@@ -456,6 +456,14 @@ def project(args, ap) -> int:
         print("It renders off screen and logs the frame time, so it builds and runs")
         print("before you have written a display driver. Then regenerate with")
         print("--panel, or fill in main/panel.c yourself.")
+    elif P_PANEL.PANELS[info["panel_id"]]["family"] == "custom":
+        print("ONE FUNCTION IS YOURS TO WRITE: panel_bring_up() in main/panel.c.")
+        print("Paste in the bring-up that already works on your board - a vendor")
+        print("example, a BSP, an LVGL port - and set *out_panel and *out_io. The")
+        print("rest of panel.c is written: the completion wait that keeps the tile")
+        print("buffer safe, the bus mutex, fill and touch. Check PANEL_WAIT at the")
+        print("top of that file matches your bus, and that PANEL_W/PANEL_H match")
+        print("your glass. As generated it builds and flashes, and says it is empty.")
     else:
         print("THE PINS IN main/panel.c ARE NOT YOUR BOARD'S until you have checked")
         print(f"them - they are {P_PANEL.PANELS[info['panel_id']]['source']}'s.")
@@ -617,8 +625,12 @@ def main() -> int:
         print("--panel        (per target)")
         for k, v in PN.PANELS.items():
             print(f"  {k:<14} {v['label']}")
-            print(f"  {'':<14} targets: {', '.join(v['targets'])}"
-                  f"   native {v['size'][0]}x{v['size'][1]}")
+            # "native" is the glass's own size and overrides --viewport.
+            # The custom panel has none - saying 240x320 there would name a
+            # size the generated project does not use.
+            size = (f"native {v['size'][0]}x{v['size'][1]}"
+                    if v.get("native", True) else "size: whatever --viewport says")
+            print(f"  {'':<14} targets: {', '.join(v['targets'])}   {size}")
             print(f"  {'':<14} pins from: {v['source']}")
         print()
         print("--touch")
