@@ -28,6 +28,14 @@ entries, and the pins stay in the code that already works on your desk.
   `--viewport`, because it is the one panel whose glass a3d has not been told
   about.
 
+- `docs/DISPLAY_ESP_IDF.md` and `docs/DISPLAY_ARDUINO.md`: how to get a panel
+  lit, one file per framework. Bringing up a display is the step most people
+  stop at, and every hard part of it is invisible - the DMA wait that must not
+  return early, the byte order that turns a black background pink, the bus
+  mutex two workers need, the tile buffers that land in PSRAM on an Arduino
+  board by default. Both carry a symptom table and a bring-up ladder that
+  separates "it drew nothing" from "it drew and the panel did not show it".
+
 ### Fixed
 - **The generated MIPI-DSI glue did not wait for its tile.** Its comment said a
   DPI `draw_bitmap` is a plain memory write, which is true only without DMA2D -

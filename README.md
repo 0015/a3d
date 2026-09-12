@@ -232,6 +232,13 @@ void loop()
 `viewer.setOverlay()` hands you each tile before it goes to the panel if you
 want a caption on it.
 
+**Getting the panel itself right is the step people stop at**, and it is
+written out in full in [docs/DISPLAY_ARDUINO.md](docs/DISPLAY_ARDUINO.md):
+which entry point of your display library to call and why one of them costs a
+whole extra pass over the frame, the byte order that turns a black background
+pink, the bus mutex two workers need, where the tile buffers have to live on a
+board with PSRAM, and a symptom table.
+
 #### Board settings that matter
 
 | Tools menu | Why |
@@ -773,6 +780,12 @@ everything else already written. It builds and flashes as generated and logs
 that the function is empty, so you are never stuck behind a project that will
 not compile until you have finished the hard part.
 
+**And if you would rather write it yourself**,
+[docs/DISPLAY_ESP_IDF.md](docs/DISPLAY_ESP_IDF.md) is the long version: a
+complete SPI panel with the completion callback, what changes on MIPI-DSI, the
+byte order, the bus mutex, where the tile buffers have to live, what ESP-IDF
+6.0 renamed, and a symptom table.
+
 ### Other flags worth knowing
 
 | | |
@@ -899,6 +912,8 @@ src/viewer/         a3d::Viewer - the four-call wrapper
 tools/              the exporter chain and the host previewer
 examples/ESP-IDF/   four boards, all run on the hardware they name
 examples/Arduino/   two sketches
+docs/DISPLAY_ESP_IDF.md  getting a panel lit under ESP-IDF
+docs/DISPLAY_ARDUINO.md  the same under Arduino
 docs/ASSET_FORMAT.md the container format
 ```
 
