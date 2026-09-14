@@ -19,6 +19,10 @@
   <a href="#what-is-verified-and-what-is-not">What is verified</a>
 </p>
 
+<p align="center">
+  <img src="a3d_showcase.gif" alt="A skinned low-poly model animating on an ESP32 panel, driven by a3d" width="100%">
+</p>
+
 ---
 
 ## Why this exists
