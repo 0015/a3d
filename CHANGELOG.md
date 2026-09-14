@@ -4,6 +4,29 @@ All notable changes to a3d are recorded here. The format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and versions follow
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.9.3] - 2026-09-14
+
+Packaging only. Nothing in `src/` moved, and a build that worked on 0.9.2
+builds identically here.
+
+The first upload to the ESP Component Registry carried 4.1 MB, of which 5.8 MB
+uncompressed was pictures and Arduino model headers: `idf.py add-dependency`
+put the banner, the showcase GIF and two model-as-header arrays into every
+consumer's `managed_components/`, and no ESP-IDF build reads any of them.
+
+### Changed
+- The README's two images are referenced by absolute
+  `raw.githubusercontent.com` URL rather than by relative path, so they render
+  on the registry and on PlatformIO without the files being shipped.
+- `idf_component.yml` excludes `a3d_banner.jpeg`, `a3d_showcase.gif` and
+  `examples/Arduino/**`; `library.json` excludes the two images. The registry
+  archive drops from 4.1 MB to 0.5 MB. Arduino and PlatformIO still get
+  the Arduino examples - only the ESP-IDF package leaves them out.
+- The README's ESP-IDF install section leads with
+  `idf.py add-dependency "0015/a3d^0.9.3"` now that the component is on the
+  registry, and keeps the git dependency as the way to get the tree the
+  registry copy trims. `a3d_export.py --project` pins `v0.9.3`.
+
 ## [0.9.2] - 2026-09-12
 
 Transparency, which a3d does not have and had not been saying so. A glTF

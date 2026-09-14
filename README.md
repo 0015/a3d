@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="a3d_banner.jpeg" alt="a3d" width="100%">
+  <img src="https://raw.githubusercontent.com/0015/a3d/main/a3d_banner.jpeg" alt="a3d" width="100%">
 </p>
 
 <h1 align="center">a3d</h1>
@@ -20,7 +20,7 @@
 </p>
 
 <p align="center">
-  <img src="a3d_showcase.gif" alt="A skinned low-poly model animating on an ESP32 panel, driven by a3d" width="100%">
+  <img src="https://raw.githubusercontent.com/0015/a3d/main/a3d_showcase.gif" alt="A skinned low-poly model animating on an ESP32 panel, driven by a3d" width="100%">
 </p>
 
 ---
@@ -113,26 +113,42 @@ character or object, animated, filling part of a small screen.
 
 ## Install
 
-### ESP-IDF (component manager)
+### ESP-IDF (component registry)
 
-`main/idf_component.yml`:
+```bash
+idf.py add-dependency "0015/a3d^0.9.3"
+```
+
+which is the same as writing it into `main/idf_component.yml` yourself:
 
 ```yaml
 dependencies:
-  a3d:
-    git: "https://github.com/0015/a3d.git"
-    version: "main"
+  0015/a3d: "^0.9.3"
 ```
 
-Then name it in your component's `REQUIRES`:
+Then name it in your component's `REQUIRES` - the namespace is part of the
+dependency, not of the component:
 
 ```cmake
 idf_component_register(SRCS "main.cpp" INCLUDE_DIRS "." REQUIRES a3d)
 ```
 
 `idf.py build` fetches it. a3d is header-only and registers its own include
-paths, so that is the whole integration. Pin a tag rather than a branch once
-you care about reproducible builds.
+paths, so that is the whole integration.
+
+### ESP-IDF (from git)
+
+The registry copy leaves out the Arduino examples and the README's images.
+To get the whole tree, or a commit that is not a release:
+
+```yaml
+dependencies:
+  a3d:
+    git: "https://github.com/0015/a3d.git"
+    version: "v0.9.3"
+```
+
+Pin a tag rather than a branch once you care about reproducible builds.
 
 ### ESP-IDF (as a component in your tree)
 
